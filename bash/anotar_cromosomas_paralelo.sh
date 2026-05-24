@@ -8,8 +8,8 @@
 #SBATCH --array=0-23 
 #SBATCH --partition=        # Queue/partition (adjust to your system)
 
+#Script para anotación paralelizando por cromosomas
 ml Java
-ml Miniconda3/24.7.1-0
 conda activate tfg-env
 
 snpeff_folder="/data/snpEff"
