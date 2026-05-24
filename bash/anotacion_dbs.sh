@@ -26,7 +26,7 @@ java -jar /data/SnpSift.jar annotate dbnsfp \
 java -jar /data/SnpSift.jar annotate \
     -v /data/clinvar_20250209.vcf.gz \
     /data/vcf_anotado/vcf_dbsnp_dbnsfp.vcf \
-    > /data/scratch/001/u0010010/data/vcf_anotado/vcf_dbsnp_dbnsfp_clinvar.vcf
+    > /data/vcf_anotado/vcf_dbsnp_dbnsfp_clinvar.vcf 
 
 #Anotar usando gnomAD
 java -Xmx1g -jar /data/SnpSift.jar annotate -info AF -name gnomAD_ \
