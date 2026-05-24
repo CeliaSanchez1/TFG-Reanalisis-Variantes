@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=fusionar_vcf     # Job name
-#SBATCH --output=vcf_%j.out       # Output file (%j expands to job ID)
-#SBATCH --error=vcf_%j.err        # Error file
+#SBATCH --job-name=comparar_vcf     # Job name
+#SBATCH --output=comparar_vcf_%j.out       # Output file (%j expands to job ID)
+#SBATCH --error=comparar_vcf_%j.err        # Error file
 #SBATCH --time=02:00:00             # Walltime (3 minute)
 #SBATCH --ntasks=1                  # Number of tasks (processes)
 #SBATCH --cpus-per-task=4           # Number of CPU cores per task
