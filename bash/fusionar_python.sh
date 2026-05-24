@@ -8,8 +8,9 @@
 #SBATCH --mem=8G                 # Memory per node
 #SBATCH --partition         # Queue/partition 
 
-ml Miniconda3/24.7.1-0
+#Wrapper para fusionar VCF con funciones de python
+conda activate tfg-env
 export _JAVA_OPTIONS="-Xmx6G"   #Para poder cargar bien la base de datos al utilizar SnpEff
 
-conda run -n python3.14 python fusionar_python.py #Esto es todo mi flujo de trabajo de pre-procesar VCF, separar SNV y SV, y anotar SNV con SnpEff. 
+conda run -n tfg-env python fusionar_python.py #Esto es todo mi flujo de trabajo de pre-procesar VCF, separar SNV y SV, y anotar SNV con SnpEff. 
 
