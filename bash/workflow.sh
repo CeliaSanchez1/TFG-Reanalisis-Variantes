@@ -1,15 +1,14 @@
 #!/bin/bash
-#SBATCH --job-name=fusionar_vcf     # Job name
-#SBATCH --output=vcf_%j.out       # Output file (%j expands to job ID)
-#SBATCH --error=vcf_%j.err        # Error file
+#SBATCH --job-name=workflow    # Job name
+#SBATCH --output=workflow_%j.out       # Output file (%j expands to job ID)
+#SBATCH --error=workflow_%j.err        # Error file
 #SBATCH --time=10:00:00             # Walltime (3 minute)
 #SBATCH --ntasks=1                  # Number of tasks (processes)
 #SBATCH --cpus-per-task=4           # Number of CPU cores per task
 #SBATCH --mem=8G                 # Memory per node
-#SBATCH --partition=intel_skylake           # Queue/partition (adjust to your system)
+#SBATCH --partition=         # Queue/partition (adjust to your system)
 
-ml Miniconda3/24.7.1-0
-conda activate python3.14
+conda activate tfg-env
 set -euo pipefail
 
 #Directorios
