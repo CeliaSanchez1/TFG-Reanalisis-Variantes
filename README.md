@@ -15,9 +15,10 @@ El pipeline sigue las siguientes etapas:
 6. Reanotación del cromosoma M
 7. Comparación de versiones de la anotación de los cromosomas
 8. Comparación de versiones de la anotación del cromosoma M
-9. Unión de los archivos de todos los cromosomas
-10. Detección de nuevas variantes patogénicas
-11. Filtrar por HPO e integrar información diagnóstica
+9. Detección de nuevas variantes patogénicas
+10. Filtrado por HPO y extracción de TSV con campos más relevantes
+11. Unión de los TSV de todos los cromosomas
+12. Integración con información diagnóstica
 
 # Ejecución
 Todo el flujo de trabajo se gestiona a través del script workflow.sh
