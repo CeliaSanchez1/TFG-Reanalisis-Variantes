@@ -8,8 +8,7 @@
 #SBATCH --mem=8G                 # Memory per node
 #SBATCH --partition=         # Queue/partition (adjust to your system)
 
-ml Miniconda3/24.7.1-0
-conda activate python3.14
+conda activate tfg-env
 
 #PREPROCESADO
 OLD_VCF="/data/Comparacion_versiones/anotacion-version-anterior/vcf_anotado.vcf.gz"
@@ -18,5 +17,5 @@ OUTDIR="/data/Comparacion_versiones/resultados.gz"
 mkdir -p "$OUTDIR"
 
 # COMPARACIÓN
-conda run -n python3.14 python comparar_versiones_anotacion.py "$OLD_VCF" "$NEW_VCF" "$OUTDIR" 
+conda run -n tfg-env python comparar_versiones_anotacion.py "$OLD_VCF" "$NEW_VCF" "$OUTDIR" 
 
