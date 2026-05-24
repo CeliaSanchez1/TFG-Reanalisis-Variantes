@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=fusionar_vcf     # Job name
-#SBATCH --output=vcf_%j.out       # Output file (%j expands to job ID)
-#SBATCH --error=vcf_%j.err        # Error file
+#SBATCH --job-name=anotar_db    # Job name
+#SBATCH --output=anotar_db_%j.out       # Output file (%j expands to job ID)
+#SBATCH --error=anotar_db_%j.err        # Error file
 #SBATCH --time=10:00:00             # Walltime (ESTO PONER MÍNIMO A 5h PARA QUE DE TIEMPO A TODO EN TOTAL)
 #SBATCH --ntasks=1                  # Number of tasks (processes)
 #SBATCH --cpus-per-task=4           # Number of CPU cores per task
