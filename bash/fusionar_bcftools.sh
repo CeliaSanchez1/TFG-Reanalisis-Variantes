@@ -8,13 +8,13 @@
 #SBATCH --mem=8G                 # Memory per node
 #SBATCH --partition=        # Queue/partition
 
-ml Miniconda3/24.7.1-0
+conda activate tfg-env
 
 #Indexar archivos antes de fusionarlos 
-conda run -n python3.14 bcftools index -f /data/vcf_original/VCF_original_1.vcf.gz
-conda run -n python3.14 bcftools index -f /data/vcf_original/VCF_original_2.vcf.gz
+conda run -n tfg-env bcftools index -f /data/vcf_original/VCF_original_1.vcf.gz
+conda run -n tfg-env bcftools index -f /data/vcf_original/VCF_original_2.vcf.gz
 
 #Fusionar 
-conda run -n python3.14 bcftools merge /data/vcf_original/VCF_original_1.vcf.gz /data/vcf_original/VCF_original_2.vcf.gz \
+conda run -n tfg-env bcftools merge /data/vcf_original/VCF_original_1.vcf.gz /data/vcf_original/VCF_original_2.vcf.gz \
  -Oz -o /data/pasos_intermedios/vcf_fusionado.vcf.gz
 
