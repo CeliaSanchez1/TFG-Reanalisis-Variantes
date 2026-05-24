@@ -8,14 +8,11 @@
 #SBATCH --mem=4G                 # Memory per node
 #SBATCH --partition=        # Queue/partition (adjust to your system)
 
-# Pipeline de anotación de variantes del cromosoma mitocondrial (chrM), mejoras implementadas:
-# Renombrado chrM → MT para compatibilidad con MITOMAP
-# Filtrado de alelos simbólicos <NON_REF> (evita NullPointerException)
-# Filtrado de muestras sin alelo alternativo real (reduce denominador)
-# SnpEff con jar explícito, memoria asignada y stderr capturado
-# Compresión BGZF correcta via bgzip 
-# SnpSift sin flag -db (argumento posicional)
-# tabix con -p vcf explícito en todos los pasos
+#MEJORAS RESPECTO A LA VERSIÓN ANTERIOR:
+#Renombrar chrM → MT también en el contig
+#Filtrar alelos simbólicos <NON_REF> para evitar NullPointerException
+#Filtrar muestras sin alelo alternativo real 
+#tabix con -p vcf explícito en todos los pasos
 
 set -euo pipefail
 
@@ -32,24 +29,24 @@ TMP_CLEAN="${WORKDIR}/tmp_02_clean.vcf.gz"
 TMP_SNPEFF_VCF="${WORKDIR}/tmp_03_snpeff.vcf"
 TMP_SNPEFF_GZ="${WORKDIR}/tmp_03_snpeff.vcf.gz"
 
-# Renombrar chrM → MT
+#Renombrar chrM → MT
 CHR_MAP="${WORKDIR}/chr_map.txt"
 printf "chrM\tMT\n" > "$CHR_MAP"
 
-# Anotar
+#Anotar
 bcftools annotate --rename-chrs "$CHR_MAP" -Oz -o "$TMP_RENAMED" "$INPUT"
 tabix -p vcf "$TMP_RENAMED"
 
-# Filtrar entradas no anotables
+#Filtrar entradas no anotables
 bcftools view -e 'ALT="<NON_REF>"'"$TMP_RENAMED" | bcftools view -c 1 -Oz -o "$TMP_CLEAN"
 tabix -p vcf "$TMP_CLEAN"
 java -Xmx"${SNPEFF_MEM}" -jar "$SNPEFF_JAR" ann -v -nodownload "$SNPEFF_GENOME" "$TMP_CLEAN" > "$TMP_SNPEFF_VCF"
 
-# Comprimir con bgzip (BGZF) e indexar
+#Comprimir con bgzip (BGZF) e indexar
 bgzip -f "$TMP_SNPEFF_VCF"                 
 tabix -p vcf "$TMP_SNPEFF_GZ"
 
-# Anotación clínica con SnpSift + MITOMAP
+#Anotación clínica con SnpSift + MITOMAP
 java -Xmx"${SNPEFF_MEM}" -jar "$SNPSIFT_JAR" annotate -v -tabix "$MITOMAP_DB" "$TMP_SNPEFF_GZ" | bgzip > "$OUTPUT"
 tabix -p vcf "$OUTPUT"
 
