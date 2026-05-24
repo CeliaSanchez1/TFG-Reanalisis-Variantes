@@ -10,7 +10,7 @@
 
 ml Java
 ml Miniconda3/24.7.1-0
-conda activate python3.14
+conda activate tfg-env
 
 snpeff_folder="/data/snpEff"
 outdir="/data/cromosomas_anotados"
@@ -33,7 +33,8 @@ if [ -z "$CHR" ]; then
 fi
 echo "Procesando $CHR"
 
-conda run -n python3.14 scritps_python/anotacion_snpEff.py "$input/${CHR}.vcf.gz" "$output/snpEff/vcf_${CHR}.vcf.gz" 
+#Anorar con snpEff, indexar y comprimir
+conda run -n tfg-env scritps_python/anotacion_snpEff.py "$input/${CHR}.vcf.gz" "$output/snpEff/vcf_${CHR}.vcf.gz" 
 java -jar "$snpeff_folder/SnpSift.jar" annotate "$dbsnp_path" "$output/snpeff/vcf_${CHR}.vcf.gz" | bgzip > "$output/dbsnp/vcf_${CHR}.vcf.gz"
 tabix -p vcf "$output/cromosomas_anotados/dbsnp/vcf_${CHR}.vcf.gz"
 java -jar "$snpeff_folder/SnpSift.jar" dbnsfp -v -db "$dbnsfp_path" "$output/dbsnp/vcf_${CHR}.vcf.gz" | bgzip > "$output/dbnsfp/vcf_${CHR}.vcf.gz"
