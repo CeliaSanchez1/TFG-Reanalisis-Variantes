@@ -8,7 +8,7 @@
 #SBATCH --mem=4G                 # Memory per node
 #SBATCH --partition=        # Queue/partition (adjust to your system)
 
-#MEJORAS RESPECTO A LA VERSIÓN ANTERIOR:
+#Script mejorado para anotar el cromosoma M empleando MITOMAP. MEJORAS RESPECTO A LA VERSIÓN ANTERIOR:
 #Renombrar chrM → MT también en el contig
 #Filtrar alelos simbólicos <NON_REF> para evitar NullPointerException
 #Filtrar muestras sin alelo alternativo real 
