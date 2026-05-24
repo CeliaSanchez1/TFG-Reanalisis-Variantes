@@ -1,40 +1,35 @@
 #!/bin/bash
-#SBATCH --job-name=fusionar_vcf     # Job name
-#SBATCH --output=vcf_%j.out       # Output file (%j expands to job ID)
-#SBATCH --error=vcf_%j.err        # Error file
+#SBATCH --job-name=descargar_db    # Job name
+#SBATCH --output=descargar_db_%j.out       # Output file (%j expands to job ID)
+#SBATCH --error=descargar_db_%j.err        # Error file
 #SBATCH --time=02:00:00             # Walltime (3 minute)
 #SBATCH --ntasks=1                  # Number of tasks (processes)
 #SBATCH --cpus-per-task=4           # Number of CPU cores per task
 #SBATCH --mem=8G                 # Memory per node
 #SBATCH --partition=         # Queue/partition (adjust to your system)
 
-
-#Con la carpeta de snpeff y de las db como input
-#Comprueba las versiones de las db y si no son las más actuales las vuelve a descargar
-
+#Script para comprobar las versiones de las db y volver a descargarlas si no son las más recientes 
 ml Java
+
 if [ ! -f "data/snpEff/snpEff.config" ]; then
   echo "data/snepEff/snpEff.config not found"; exit
 fi
 
-#Crea una carpeta data dentro de la carpeta de snpEff y cambia el directorio actual a esa.
 WORKDIR="snpEff/dbs" 
 mkdir -p "$WORKDIR"
-REANNOTATE=false
 
-##Código para descargar últimas versiones de las dbs
-#ClinVar
-ClinVarURL="https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/"
-clinvar_version_file="${WORKDIR}/clinvar.version"
-clinvarFile=$(curl -s "$ClinVarURL/" | grep -oE 'clinvar_[0-9]+\.vcf\.gz' | sort -V | tail -n1)
-clinvar_path="${WORKDIR}/${clinvarFile}"
+#Descarga de clinVar
+ClinVarURL="https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/" #URL REPOSITORIO DB
+clinvar_version_file="${WORKDIR}/clinvar.version" #archivo de version actual
+clinvarFile=$(curl -s "$ClinVarURL/" | grep -oE 'clinvar_[0-9]+\.vcf\.gz' | sort -V | tail -n1) #Busqueda de la version en el repositorio
+clinvar_path="${WORKDIR}/${clinvarFile}" 
 clinvar_tbi="${clinvar_path}.tbi"
 
+#Comprobar si la version del repositorio coincide con la descargada y si no descargarla
 if [[ -f "$clinvar_version_file" ]] && grep -qx "$clinvarFile" "$clinvar_version_file" \
    && [[ -s "$clinvar_path" ]] && [[ -s "$clinvar_tbi" ]]; then
-  echo "ClinVar up to date"
-
-else
+  echo "ClinVar up to date" 
+else 
   echo "Downloading ClinVar $clinvarFile"
   cd "$WORKDIR"
   rm -f clinvar_*.vcf.gz clinvar_*.vcf.gz.tbi
@@ -82,7 +77,7 @@ else
   echo "dbSNP updated successfully"
 fi
 
-# dbNSFP DOWNLOAD-
+# dbNSFP
 dbnsfpURL="http://dbnsfp.houstonbioinformatics.org/dbNSFPzip"
 dbnsfp_version_file="${WORKDIR}/dbnsfp.version"
 mkdir -p "$WORKDIR"
