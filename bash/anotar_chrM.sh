@@ -9,8 +9,7 @@
 #SBATCH --partition=        # Queue/partition (adjust to your system)
 
 ml Java
-ml Miniconda3/24.7.1-0
-conda activate python3.14
+conda activate tfg-env
 
 SnpSift_JAR=/data/snpEff/SnpSift.jar
 Mitomap_disease_db=/data/snpEff/variant_dbs/disease.vcf.gz
