@@ -5,7 +5,8 @@
 #SBATCH --mem=244G
 #SBATCH --time=23:59:59
 
-#Comando de DRAGEN para fusionar VCF
+#Script para fusionar archvios VCF con dragen
+
 /opt/edico/bin/dragen  --ref-dir /data/hg38_graph \
      --ht-reference /data/GRCh38.fa \
      --enable-gvcf-genotyper-iterative true \
