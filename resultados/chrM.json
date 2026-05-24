@@ -1,0 +1,77 @@
+{
+  "total_old": 7135,
+  "total_new": 7135,
+  "only_old": 0,
+  "only_new": 0,
+  "common": 7135,
+  "diseasestatus_coverage": {
+    "old_classified": 398,
+    "old_total": 7135,
+    "new_classified": 400,
+    "new_total": 7135
+  },
+  "gain_pathogenic": 1,
+  "newly_annotated_pathogenic": 1,
+  "reclassified_pathogenic": 0,
+  "loss_pathogenic": 0,
+  "transitions": {
+    "reported->reported": {
+      "count": 301,
+      "variants": []
+    },
+    "unclassified->unclassified": {
+      "count": 6735,
+      "variants": []
+    },
+    "unclear->unclear": {
+      "count": 5,
+      "variants": []
+    },
+    "cfrm-p->cfrm-p": {
+      "count": 7,
+      "variants": []
+    },
+    "cfrm-lp->cfrm-lp": {
+      "count": 29,
+      "variants": []
+    },
+    "unclassified->reported-lp": {
+      "count": 1,
+      "variants": []
+    },
+    "conflicting->conflicting": {
+      "count": 16,
+      "variants": []
+    },
+    "reported-b->reported-b": {
+      "count": 6,
+      "variants": []
+    },
+    "reported-vus->reported-vus": {
+      "count": 26,
+      "variants": []
+    },
+    "cfrm-vus->cfrm-vus": {
+      "count": 5,
+      "variants": []
+    },
+    "reported-lb->reported-lb": {
+      "count": 3,
+      "variants": []
+    },
+    "unclassified->cfrm-p": {
+      "count": 1,
+      "variants": [
+        "MT:56:A:AC,ATC,<NON_REF>"
+      ]
+    }
+  },
+  "changed_variants": [
+    {
+      "variant": "MT:56:A:AC,ATC,<NON_REF>",
+      "old": "unclassified",
+      "new": "cfrm-p",
+      "disease": "FAKE"
+    }
+  ]
+}

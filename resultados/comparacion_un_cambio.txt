@@ -1,0 +1,15 @@
+RESUMEN DE COMPARACIÓN DE ANOTACIONES
+
+Variantes en OLD: 293902
+Variantes en NEW: 293902
+
+Variantes en ambas anotaciones: 293902
+Variantes nuevas (solo NEW): 0
+Variantes perdidas (solo OLD): 0
+
+CLNSIG coverage:
+OLD clasificados: 37998/293902 (12.93%)
+NEW clasificados: 37999/293902 (12.93%)
+
+Variantes con cambio en CLNSIG: 1
+% modificadas sobre comunes: 0.0003%
