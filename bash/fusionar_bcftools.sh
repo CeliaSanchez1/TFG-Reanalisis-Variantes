@@ -8,7 +8,7 @@
 #SBATCH --mem=8G                 # Memory per node
 #SBATCH --partition=        # Queue/partition
 
-#Wrapper para fusionar archivos VCF con funciones de python
+#Wrapper para fusionar archivos VCF con funciones de bcftools
 conda activate tfg-env
 
 #Indexar archivos antes de fusionarlos 
