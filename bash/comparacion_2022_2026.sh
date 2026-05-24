@@ -8,9 +8,9 @@
 #SBATCH --mem=8G                 # Memory per node
 #SBATCH --partition=         # Queue/partition (adjust to your system)
 
+#Wrapper para comparar versiones de la anotación empleando la función de python
 conda activate tfg-env
 
-#PREPROCESADO
 OLD_VCF="/data/Comparacion_versiones/anotacion-version-anterior/vcf_anotado.vcf.gz"
 NEW_VCF="/data/Comparacion_versiones/anotacion-ultima-version/vcf_anotado.vcf.gz"
 OUTDIR="/data/Comparacion_versiones/resultados.gz"
