@@ -9,6 +9,7 @@
 #SBATCH --partition=       # Queue/partition (adjust to your system)
 
 ml Java
+#Script para anotar ficheros VCF aplicando las bases de datos secuencialmente
 
 # Anotar usando dbsnp
 java -jar /data/SnpSift.jar annotate \
