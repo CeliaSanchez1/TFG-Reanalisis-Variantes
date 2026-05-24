@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=comparar_vcf     # Job name
-#SBATCH --output=vcf_%A_%a.out
-#SBATCH --error=vcf_%A_%a.err
+#SBATCH --job-name=anotar_chrM    # Job name
+#SBATCH --output=anotar_chrM_%A_%a.out
+#SBATCH --error=anotar_chrM_%A_%a.err
 #SBATCH --time=23:59:59             # Walltime 
 #SBATCH --ntasks=1                  # Number of tasks (processes)
 #SBATCH --cpus-per-task=1          # Number of CPU cores per task
