@@ -8,17 +8,19 @@
 #SBATCH --mem=8G                 # Memory per node
 #SBATCH --partition=        # Queue/partition (adjust to your system)
 
+#Script para anotar el cromosoma M empleando MITOMAP
+
 ml Java
 conda activate tfg-env
 
 SnpSift_JAR=/data/snpEff/SnpSift.jar
 Mitomap_disease_db=/data/snpEff/variant_dbs/disease.vcf.gz
 
-#Comprimir e indexar la db:
+#Comprimir e indexar la db
 bgzip "$Mitomap_disease_db"
 tabix -p vcf "$Mitomap_disease_db.gz"
 
-#Edito el VCF porque ahí mis CHROM aparecen como chrM y en MITOMAP como MT
+#Editar el VCF porque ahí mis CHROM aparecen como chrM y en MITOMAP como MT
 zcat "/data/chrM.vcf.gz" | sed 's/^chrM\t/MT\t/' | bgzip > /data/vcf_MT.vcf.gz
 tabix -p vcf "/data/vcf_MT.vcf.gz"
 
