@@ -10,7 +10,7 @@
 #SBATCH --array=0-23   # 24 tareas
 
 ml Miniconda3/24.7.1-0
-conda activate python3.14
+conda activate tfg-env
 
 CHR=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$3/chromosomes.txt")
 echo "Procesando $CHR"
@@ -20,7 +20,7 @@ OLD_VCF="$1/vcf_${CHR}.vcf.gz"
 NEW_VCF="$2/cromosomas_anotados/final/vcf_${CHR}.vcf.gz"
 
 wget -O data/phenotype_to_genes.txt http://purl.obolibrary.org/obo/hp/phenotype_to_genes.txt
-conda run -n python3.14 python scritps_python/comparar.py "data/phenotype_to_genes.txt" "$OLD_VCF" "$NEW_VCF" "$2" "$2/Union_HPO/${CHR}.tsv" "$2/Union_HPO_reducido/${CHR}.tsv"
+conda run -n tfg-env python scritps_python/comparar.py "data/phenotype_to_genes.txt" "$OLD_VCF" "$NEW_VCF" "$2" "$2/Union_HPO/${CHR}.tsv" "$2/Union_HPO_reducido/${CHR}.tsv"
 
 
 
