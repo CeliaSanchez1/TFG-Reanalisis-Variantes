@@ -14,4 +14,4 @@
 conda run -n tfg-env bcftools view -v snps,indels -Oz -o /data/pasos_intermedios/VCF_SNVS.vcf.gz /data/pasos_intermedios/vcf_fusionado.vcf.gz
 
 #Lo mismo pero en una versión sin comprimir para visualizarlo mejor
-conda run -n python3.14 bcftools view -v snps,indels -Ov -o /data/pasos_intermedios/VCF_SNVS.vcf /data/pasos_intermedios/vcf_fusionado.vcf.gz
+conda run -n tfg-env bcftools view -v snps,indels -Ov -o /data/pasos_intermedios/VCF_SNVS.vcf /data/pasos_intermedios/vcf_fusionado.vcf.gz
