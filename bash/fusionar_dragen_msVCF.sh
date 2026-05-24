@@ -5,7 +5,8 @@
 #SBATCH --mem=244G
 #SBATCH --time=23:59:59
 
-#Todas las muestras almacenadas en la carpeta VCF_originales.
+#Script para fusionar archivos VCF empleando una lista como argumento
+
 #Listo las muestras en un txt para evitar pasar tantos argumentos en el comando de DRAGEN.
 find "/data/VCF_originales" -type f -name "*.vcf.gz" | sort > "data/lista_muestras_vcf.txt"
 
