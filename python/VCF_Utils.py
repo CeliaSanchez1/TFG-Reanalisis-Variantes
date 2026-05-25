@@ -5,8 +5,10 @@ import csv
 import gzip
 from cyvcf2 import VCF, Writer
 
-##FUNCIONES PARA PRE-PROCESAR FICHEROS VCF ORIGINALES
-#Convertir el VCF a matriz
+#Este script contiene funciones para pre-procesar ficheros VCF, convirtiéndolos a matrices,comprimiéndolas y generando ficheros CSV
+#temporales para la visualización de la transformación. También contiene funciones para volver a convertir estas matrices a ficheros VCF
+#simplificados, separarlos en SVs y SNVs y prepararlos para la anotación con SnepEff
+
 def vcf_to_matrix(vcf_file):
     """
     Generar matriz de genotipos a partir de un VCF multi-paciente,
@@ -47,19 +49,21 @@ def vcf_to_matrix(vcf_file):
                 else:
                     val = 0  # homocigoto referencia
                 data[col_name].append(val)
+
+    # Convertir el diccionario a matriz numpy
     col_names = list(data.keys())
     matriz_vcf = np.array([data[k] for k in col_names], dtype='int8')
 
     # Asegurarse de que siempre filas = variantes, columnas = muestras
     if len(vcf.samples) == 1:
         matriz_vcf = matriz_vcf.reshape(-1, 1)
-    else:
+    else: # transponer para que filas sean variantes y columnas muestras
         matriz_vcf = matriz_vcf.T
 
     #Devuelvo la matriz, la clave y el código del paciente para poder identificarlo después al unir varias matrices
     return matriz_vcf, row_keys, ref_list, alt_list, vcf.samples
 
-#Comprimir la matriz en extensión .npz
+
 def merge_vcfs_to_npz(vcf_folder, output_npz, output_csv):
     """
     Convierte múltiples archivos VCF almacenados en una carpeta 
@@ -73,8 +77,8 @@ def merge_vcfs_to_npz(vcf_folder, output_npz, output_csv):
             if file.name.endswith(".vcf") or file.name.endswith(".vcf.gz"):
                 vcf_files.append(file.path)
 
-    data = {}
-    key = {}  # Para guardar samples y row_keys de cada matriz
+    data = {} # Diccionario para almacenar matrices de variantes
+    key = {}  # Diccionario para guardar samples y row_keys de cada matriz
     
     for vcf_file in vcf_files:
         # Nombre para identificar cada archivo original en la matriz npz
@@ -89,7 +93,8 @@ def merge_vcfs_to_npz(vcf_folder, output_npz, output_csv):
         else:
             with open(vcf_file, 'r') as f:
                 header_lines = [line.strip() for line in f if line.startswith("#")]
-       
+
+        # Convertir el VCF a matriz
         matriz, row_keys, ref_list, alt_list, samples = vcf_to_matrix(vcf_file)
         
         # Guardar todo en key
@@ -103,20 +108,18 @@ def merge_vcfs_to_npz(vcf_folder, output_npz, output_csv):
     # Guardar todo en .npz
     np.savez_compressed(output_npz, **data, **key)
 
-    # Convertir a CSV global si quieres
+    # Convertir a CSV global para visualización
     npz_to_csv(output_npz, output_csv)
     print(f"Guardado {len(vcf_files)} matrices en {output_npz}")
 
-#Convertir la matriz a un csv temporal para visualizar la transformación
+
 def npz_to_csv(npz_file, output_csv):
     """
     Convierte un .npz generado por merge_vcfs_to_npz
     en un único CSV global con todas las variantes y todos los pacientes.
     Rellena con 3 (genotipo desconocido) si falta información para algún paciente.
     """
-    import numpy as np
-    import csv
-
+    
     data = np.load(npz_file, allow_pickle=True)
 
     # Diccionario global: key = variante, value = dict {paciente: genotipo}
@@ -131,6 +134,7 @@ def npz_to_csv(npz_file, output_csv):
     ]
 
     for id_vcf in matrices:
+        # Recuperar metadatos del VCF
         row_keys = data[f"{id_vcf}_rows"]
         ref_list = data[f"{id_vcf}_ref"]
         alt_list = data[f"{id_vcf}_alt"]
@@ -139,10 +143,13 @@ def npz_to_csv(npz_file, output_csv):
 
         all_patients.extend(samples)
 
+        # Construir diccionario global de variantes, pacientes y genotipos
         for i in range(len(row_keys)):
             var = f"{row_keys[i]}_{ref_list[i]}>{alt_list[i]}"
+             # Identificador único para la variante (CHROM:POS_REF>ALT)
             if var not in combined:
                 combined[var] = {}
+            # Para cada paciente, almacenar su genotipo para esta variante
             for j, patient in enumerate(samples):
                 combined[var][patient] = matriz[i, j]
 
@@ -160,15 +167,13 @@ def npz_to_csv(npz_file, output_csv):
 
     print(f"CSV global exportado: {output_csv}")
 
-#Convertir la matriz comprimida de nuevo a un VCF simplificado
+
 def npz_to_vcf(npz_file, output_vcf):
     """
     Convierte un .npz a un VCF minimalista optimizado para anotación.
     - Una línea por variante (REF>ALT)
     - Pacientes en la columna 'PATIENTS'
     """
-    import numpy as np
-    from cyvcf2 import Writer
 
     data = np.load(npz_file, allow_pickle=True)
 
@@ -198,12 +203,14 @@ def npz_to_vcf(npz_file, output_vcf):
         last_line = header_lines[-1].strip()
         cols = last_line.split("\t")
         if "PATIENTS" not in cols:
+            # Si no existe, renombrar la última columna a PATIENTS
             cols[-1] = "PATIENTS"
             header_lines[-1] = "\t".join(cols)
 
+    # Diccionario para rastrear qué pacientes portan cada variante
     variant_to_patients = {}
 
-    # Construir diccionario variante -> pacientes
+    # Construir diccionario 
     for id_vcf in matrices:
         matriz = data[id_vcf]
         rows = data[f"{id_vcf}_rows"]
@@ -211,31 +218,37 @@ def npz_to_vcf(npz_file, output_vcf):
         alt_list = data[f"{id_vcf}_alt"]
         samples = data[f"{id_vcf}_samples"]
 
-        patient = samples[0]  # un paciente por VCF
+        # En cada VCF original hay solo un paciente (una muestra)
+        patient = samples[0]  
 
         for i in range(len(rows)):
-            if matriz[i, 0] in [1, 2]:  # solo variantes presentes
+            # solo variantes presentes
+            if matriz[i, 0] in [1, 2]:  
                 chrom, pos = rows[i].split(":")
                 ref = ref_list[i]
                 alt = alt_list[i]
                 var = (chrom, pos, ref, alt)
+                # Registrar que este paciente porta esta variante
                 if var not in variant_to_patients:
                     variant_to_patients[var] = set()
                 variant_to_patients[var].add(patient)
 
     # Escribir VCF
     with open(output_vcf, "w") as f:
+        # Escribir cabecera
         for line in header_lines:
             f.write(line + "\n")
 
+        # Escribir variantes ordenadas
         for (chrom, pos, ref, alt), patients in sorted(variant_to_patients.items()):
+            # Construir lista de pacientes separados por comas
             patient_str = ",".join(sorted(patients))
             # Columna PATIENTS en la última columna
             f.write(f"{chrom}\t{pos}\t.\t{ref}\t{alt}\t.\t.\t.\t.\t{patient_str}\n")
 
     print(f"VCF generado: {output_vcf}")
 
-#Separar el VCF en dos nuevos ficheros, uno con SNV y otro con SV, y mover la columna PATIENTS a INFO para no perder esa información al pasarlo al anotador
+
 def split_vcf(input_vcf, output_snv, output_sv):
     """
     Mueve la columna PATIENTS a INFO y elimina la columna extra final,
@@ -248,10 +261,13 @@ def split_vcf(input_vcf, output_snv, output_sv):
     with open(input_vcf) as f:
         for line in f:
             if line.startswith("##"):
+                # Línea de metadatos de cabecera
                 header_lines.append(line.strip())
             elif line.startswith("#CHROM"):
+                # Línea con nombres de columnas
                 header_lines.append(line.strip())
                 columns = line.strip().split("\t")
+                # Encontrar índice de la columna PATIENTS
                 patients_col_idx = columns.index("PATIENTS")
 
             # Ajustar la línea #CHROM para eliminar PATIENTS
@@ -259,6 +275,7 @@ def split_vcf(input_vcf, output_snv, output_sv):
                 for h in header_lines:
                     if h.startswith("#CHROM"):
                         cols = h.split("\t")
+                        # Eliminar columna PATIENTS de la cabecera
                         cols = cols[:patients_col_idx] + cols[patients_col_idx+1:]
                         header_lines_cleaned.append("\t".join(cols))
                     else:
@@ -294,7 +311,7 @@ def split_vcf(input_vcf, output_snv, output_sv):
         else:
             sv_lines.append("\t".join(rec_cleaned))
 
-    # Escribir VCF de salida
+    # Escribir VCFs de salida 
     with open(output_snv, "w") as f:
         for h in header_lines:
             f.write(h + "\n")
@@ -307,18 +324,19 @@ def split_vcf(input_vcf, output_snv, output_sv):
         for r in sv_lines:
             f.write(r + "\n")
 
-##FUNCIONES PARA PREPROCESAR EL VCF PARA ANOTAR CON SnpEff
-# Comprimir VCF anotado
+
 def compress_vcf(input_vcf, output_vcf_gz):
     """
     Comprime un VCF en formato .gz usando gzip de Python.
     """
+
+    # Leer el archivo en chunks para optimizar memoria con archivos grandes
     with open(input_vcf, 'rb') as f_in, gzip.open(output_vcf_gz, 'wb') as f_out:
+        # Procesar en bloques de 1MB
         for chunk in iter(lambda: f_in.read(1024*1024), b""):
             f_out.write(chunk)
     print(f"Archivo comprimido: {output_vcf_gz}")
 
-#Preparar el VCF para el anotador moviendo la información de pacientes a INFO y eliminando la columna extra final
 def prepare_vcf(input_vcf, provisional_vcf):
     """
     Prepara un VCF para SnpEff:
@@ -329,6 +347,7 @@ def prepare_vcf(input_vcf, provisional_vcf):
     header_lines = []
     records = []
 
+    # Procesar línea por línea
     with open(input_vcf) as f:
         for line in f:
             if line.startswith("##"):
@@ -340,9 +359,10 @@ def prepare_vcf(input_vcf, provisional_vcf):
                 else:
                     header_lines.append(line.strip())
             elif line.startswith("#CHROM"):
+                # Línea con nombres de columnas
                 cols = line.strip().split("\t")
+                # Encontrar el índice de la columna PATIENTS y eliminarla de la cabecera
                 patients_col_idx = cols.index("PATIENTS")
-                # Eliminar la columna PATIENTS de la cabecera
                 header_lines.append("\t".join(cols[:patients_col_idx] + cols[patients_col_idx+1:]))
             else:
                 fields = line.strip().split("\t")
@@ -367,7 +387,7 @@ def prepare_vcf(input_vcf, provisional_vcf):
 
                 records.append("\t".join(fields))
 
-    # Escribir provisional
+    # Escribir archivo VCF preparado
     with open(provisional_vcf, "w") as f:
         for h in header_lines:
             f.write(h + "\n")
