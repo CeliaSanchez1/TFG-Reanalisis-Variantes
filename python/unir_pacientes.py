@@ -1,8 +1,9 @@
 import pandas as pd
 
+#Script para unir la información clínica de los pacientes en el archivo de variantes a través de los HPO
+
 variants = pd.read_csv("/data/merged.changed.tsv", sep="\t", header=0)
 patients  = pd.read_csv("/data/HPO_Pacientes.tsv", sep="\t", header=0)
-
 fixed_cols = ["VARIANT", "OLD", "NEW", "HPO"]
 sample_cols = [c for c in variants.columns if c not in fixed_cols]
 
@@ -16,7 +17,6 @@ long = (
 
 #Join con tabla de pacientes por Local_ID
 merged = long.merge(patients[["Local_ID", "HPO_Observed_IDs"]], on="Local_ID")
-
 
 #Calcular intersección y guardar solo los HPO coincidentes
 def hpo_match(row):
