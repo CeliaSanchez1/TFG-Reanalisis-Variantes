@@ -24,7 +24,12 @@ El pipeline sigue las siguientes etapas:
 Todo el flujo de trabajo se gestiona a través del script workflow.sh
 
 # Requisitos
-pip install -r requirements.txt
+Todas las librerías empleadas se recogen en un entorno gestionado con Conda. Creación y activación:
+
+```bash
+conda env create -f environment.yml
+conda activate tfg-env
+```
 
 # Autor
 Celia Sánchez Tejeda – Desarrollado en Universidad Pública de Navarra y Navarra de Servicios y Tecnologías S. A.
