@@ -9,17 +9,27 @@ import subprocess
 import tempfile
 from collections import defaultdict
 from typing import Dict, Iterator, Optional, Set, Tuple
+
 import pysam
 
+#Script para la comparación de versiones de anotación del cromosoma M. Al igual que 
+#con el resto de cromosomas primero se convierte a TSV y después se comparan los campos
+#relevantes para el diagnóstico, que en este caso son otros porque cambia la base de datos empleada.
+
+#Configuración del logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
+
 log = logging.getLogger("mitomap_cmp")
 
-# Clasificación clínica MitoMap
+## CLASIFICACIÓN CLÍNICA MITOMAP
+
+#Etiquetas consideradas patogénicas
 PATHOGENIC = {"cfrm-p", "cfrm-lp"}
-# De menor a mayor prioridad clínica
+
+# Orden de prioridad clínica (de menor a mayor severidad)
 CLINICAL_PRIORITY = [
     "unclassified",
     "unclear",
@@ -35,6 +45,8 @@ CLINICAL_PRIORITY = [
     "cfrm-p",
 ]
 
+## NORMALIZACIÓN Y CLASIFICACIÓN DE DISEASESTATUS
+
 def norm_diseasestatus(x: str) -> Set[str]:
     """
     Normaliza DiseaseStatus a un conjunto de etiquetas canónicas.
@@ -48,6 +60,7 @@ def norm_diseasestatus(x: str) -> Set[str]:
     """
     if not x or x in (".", "None", "nan"):
         return set()
+    # Separación inicial por delimitadores estándar del VCF
     parts = re.split(r"[|,;]", x)
     out: Set[str] = set()
 
@@ -55,59 +68,87 @@ def norm_diseasestatus(x: str) -> Set[str]:
         p = p.strip()
         if not p:
             continue
-        # Separar subvalores unidos por ' / ' o '-/-'
+        # Subdividir expresiones compuestas
         subparts = re.split(r"\s*/\s*|-/-", p)
+        
         for sp in subparts:
             sp = sp.strip().lower()
-            # Eliminar corchetes para normalizar primero
+            # Limpieza de formato tipo [P], [LP]
             sp_clean = re.sub(r"[\[\]]", "", sp)
+
+            # Clasificación basada en patrones
             if re.search(r"conflicting", sp_clean):
                 out.add("conflicting")
+                
             elif re.search(r"cfrm.*\bp\b", sp_clean) and not re.search(r"lp", sp_clean):
                 out.add("cfrm-p")
+                
             elif re.search(r"cfrm.*lp", sp_clean):
                 out.add("cfrm-lp")
+                
             elif re.search(r"cfrm.*vus", sp_clean):
                 out.add("cfrm-vus")
+                
             elif re.search(r"reported.*\blp\b", sp_clean):
                 out.add("reported-lp")
+                
             elif re.search(r"reported.*\bp\b", sp_clean) and not re.search(r"lp|population|possibly|protective", sp_clean):
                 out.add("reported-p")
+                
             elif re.search(r"reported.*\bvus\b|\bvus\*\b", sp_clean):
                 out.add("reported-vus")
+                
             elif re.search(r"reported.*\blb\b", sp_clean):
                 out.add("reported-lb")
+                
             elif re.search(r"reported.*\bb\b", sp_clean):
                 out.add("reported-b")
+                
             elif re.search(r"reported", sp_clean):
                 out.add("reported")
+                
             elif re.search(r"unclear", sp_clean):
                 out.add("unclear")
+                
             else:
                 out.add(sp_clean)
     return out
 
+    
 def classify_set(s: Set[str]) -> str:
-    """Devuelve la clasificación de mayor prioridad del conjunto."""
+    """
+    Devuelve la clasificación de mayor prioridad del conjunto.
+    """
     if not s:
         return "unclassified"
+        
     best = "unclassified"
+    
     for v in s:
         if v in CLINICAL_PRIORITY and CLINICAL_PRIORITY.index(v) > CLINICAL_PRIORITY.index(best):
             best = v
+            
     return best
 
 def is_pathogenic(s: Set[str]) -> bool:
+    """Indica si el conjunto contiene evidencia patogénica."""
     return bool(s & PATHOGENIC)
 
 def is_only_conflicting(s: Set[str]) -> bool:
+    """True si la única anotación es 'conflicting'."""
     return s == {"conflicting"}
 
 def is_classified(x: str) -> bool:
+    """Determina si un campo está correctamente anotado."""
     return bool(x) and x not in (".", "None", "nan", "")
 
-# Extracción de campos VCF MitoMap
+    
+## EXTRACCIÓN DE CAMPOS RELEVANTES INCORPORADOS CON MITOMAP DEL VCF
+
 def _get_scalar(rec, key: str) -> str:
+    """
+    Extrae un campo INFO del VCF como string normalizado.
+    """
     v = rec.info.get(key)
     if v is None:
         return "."
@@ -115,48 +156,49 @@ def _get_scalar(rec, key: str) -> str:
         return "|".join(str(i) for i in v if i is not None)
     return str(v)
 
-def get_disease(rec) -> str:
-    return _get_scalar(rec, "Disease")
-
-def get_diseasestatus(rec) -> str:
-    return _get_scalar(rec, "DiseaseStatus")
-
-def get_aachange(rec) -> str:
-    return _get_scalar(rec, "aachange")
-
-def get_heteroplasmy(rec) -> str:
-    return _get_scalar(rec, "heteroplasmy")
-
-def get_homoplasmy(rec) -> str:
-    return _get_scalar(rec, "homoplasmy")
-
-def get_hgfl(rec) -> str:
-    return _get_scalar(rec, "HGFL")
-
-def get_pubmed(rec) -> str:
-    return _get_scalar(rec, "PubmedIDs")
+def get_disease(rec) -> str: return _get_scalar(rec, "Disease")
+def get_diseasestatus(rec) -> str: return _get_scalar(rec, "DiseaseStatus")
+def get_aachange(rec) -> str: return _get_scalar(rec, "aachange")
+def get_heteroplasmy(rec) -> str: return _get_scalar(rec, "heteroplasmy")
+def get_homoplasmy(rec) -> str: return _get_scalar(rec, "homoplasmy")
+def get_hgfl(rec) -> str: return _get_scalar(rec, "HGFL")
+def get_pubmed(rec) -> str: return _get_scalar(rec, "PubmedIDs")
 
 def _fmt_gt(gt) -> str:
+    """
+    Formatea genotipos VCF en formato legible.
+    """
     if gt is None:
         return "."
-    alleles = []
-    for a in gt:
-        alleles.append("." if a is None else str(a))
-    return "/".join(alleles)
+
+    return "/".join("." if a is None else str(a) for a in gt)
+
 
 def vcf_to_tsv(vcf_file: str, out_file: str, sort_tmp_dir: str = None):
+    """
+    Convierte un VCF MitoMap a TSV:
+    - Extrae campos relevantes (Disease, DiseaseStatus, etc.)
+    - Añade genotipos por muestra
+    - Ordena por KEY usando sort del sistema
+    - Comprime salida en gzip
+    """
     log.info(f"VCF → TSV: {vcf_file}")
+    
     vcf = pysam.VariantFile(vcf_file)
     tmp_dir = sort_tmp_dir or tempfile.gettempdir()
+    
     tmp_body = tempfile.NamedTemporaryFile(
         mode="w", suffix=".tsv", dir=tmp_dir, delete=False
     )
+    
     tmp_body_path = tmp_body.name
     header_written = False
 
     try:
         writer = None
+        
         for rec in vcf.fetch():
+            # Construcción de fila base 
             row = {
                 "KEY":          f"{rec.chrom}:{rec.pos}:{rec.ref}:{','.join(rec.alts or ['.'])}",
                 "CHROM":        rec.chrom,
@@ -172,8 +214,11 @@ def vcf_to_tsv(vcf_file: str, out_file: str, sort_tmp_dir: str = None):
                 "PUBMED":       get_pubmed(rec),
             }
 
+            #Genotipos por muestra
             for s in rec.samples:
                 row[f"{s}_GT"] = _fmt_gt(rec.samples[s].get("GT", None))
+
+            # Writer dinámico (solo se inicializa con primera fila)
             if writer is None:
                 writer = csv.DictWriter(
                     tmp_body, fieldnames=list(row.keys()),
@@ -181,36 +226,45 @@ def vcf_to_tsv(vcf_file: str, out_file: str, sort_tmp_dir: str = None):
                 )
                 writer.writeheader()
                 header_written = True
+                
             writer.writerow(row)
+            
         tmp_body.close()
+        
         if not header_written:
             log.warning(f"VCF vacío: {vcf_file}")
             with gzip.open(out_file, "wt") as f:
                 f.write("")
             return
-
+            
+        #Ordenación externa
         tmp_sorted_path = tmp_body_path + ".sorted"
         sort_env = os.environ.copy()
         if sort_tmp_dir:
             sort_env["TMPDIR"] = sort_tmp_dir
-
+            
+        # Ordena por KEY para permitir merge 
         sort_cmd = (
             f"(head -n1 {tmp_body_path} && tail -n+2 {tmp_body_path} "
             f"| sort --stable -t$'\\t' -k1,1 "
             f"{'-T ' + sort_tmp_dir if sort_tmp_dir else ''}) "
             f"> {tmp_sorted_path}"
         )
+        
         log.info("Ordenando con sort del sistema...")
         ret = subprocess.run(sort_cmd, shell=True, env=sort_env)
+        
         if ret.returncode != 0:
             raise RuntimeError(f"sort falló con código {ret.returncode}")
-
+            
+        # Compresión 
         log.info(f"Comprimiendo a {out_file}...")
         with open(tmp_sorted_path, "rb") as src, gzip.open(out_file, "wb") as dst:
             for chunk in iter(lambda: src.read(1 << 20), b""):
                 dst.write(chunk)
 
     finally:
+         #Limpieza de temporales
         for p in (tmp_body_path, tmp_body_path + ".sorted"):
             try:
                 os.unlink(p)
@@ -218,6 +272,9 @@ def vcf_to_tsv(vcf_file: str, out_file: str, sort_tmp_dir: str = None):
                 pass
 
 def iter_sorted_tsv(file: str) -> Iterator[Tuple[str, dict]]:
+    """
+    Itera un TSV (gzip o plano) y devuelve (KEY, fila).
+    """
     opener = gzip.open if file.endswith(".gz") else open
     with opener(file, "rt") as f:
         reader = csv.DictReader(f, delimiter="\t")
@@ -225,38 +282,50 @@ def iter_sorted_tsv(file: str) -> Iterator[Tuple[str, dict]]:
             yield row["KEY"], row
 
 def _sample_cols(row: dict) -> Dict[str, str]:
+    """
+    Extrae columnas de genotipos (_GT) eliminando sufijo.
+    """
     return {k[:-3]: v for k, v in row.items() if k.endswith("_GT")}
 
 # Procesado de variante común
-def _process_common(
-    key: str,
-    o: dict,
-    n: dict,
-    transitions: Dict[Tuple[str, str], int],
-    changes_by_transition: Dict[Tuple[str, str], list],
-    changed_rows: list,
-    counters: dict,
-):
-    o_raw = o.get("DISEASESTATUS", ".")
-    n_raw = n.get("DISEASESTATUS", ".")
-    o_set = norm_diseasestatus(o_raw)
-    n_set = norm_diseasestatus(n_raw)
+def _process_common(key: str, o: dict, n: dict, transitions: Dict[Tuple[str, str], int],
+    changes_by_transition: Dict[Tuple[str, str], list], changed_rows: list, counters: dict,
+    ):
+    """
+    Procesa una variante presente en OLD y NEW:
+
+    - Normaliza DiseaseStatus
+    - Clasifica estados
+    - Detecta cambios de patogenicidad
+    - Actualiza contadores globales
+    """
+            
+    o_set = norm_diseasestatus(o.get("DISEASESTATUS", "."))
+    n_set = norm_diseasestatus(n.get("DISEASESTATUS", "."))
+        
     o_label = classify_set(o_set)
     n_label = classify_set(n_set)
+        
     transitions[(o_label, n_label)] += 1
 
     if o_set != n_set:
+        
+        # Ganancia de patogenicidad
         if is_pathogenic(n_set) and not is_pathogenic(o_set) and not is_only_conflicting(n_set):
             sample_data = _sample_cols(n)
+            
             changed_rows.append((key, o_label, n_label,
                                   n.get("DISEASE", "."),
                                   n.get("AACHANGE", "."),
                                   n.get("HETEROPLASMY", "."),
                                   n.get("HOMOPLASMY", "."),
                                   n.get("PUBMED", "."),
-                                  sample_data))
+                                  sample_data
+                                ))
+            
             changes_by_transition[(o_label, n_label)].append(key)
 
+        # Estadísticas de ganancia (con separación de nuevos vs reclasificados)
         if is_pathogenic(n_set) and not is_pathogenic(o_set) and not is_only_conflicting(n_set):
             counters["gain_path"] += 1
             if not is_classified(o_raw):
@@ -264,11 +333,21 @@ def _process_common(
             else:
                 counters["reclassified"] += 1
 
+        # Pérdida de patogenicidad
         if is_pathogenic(o_set) and not is_pathogenic(n_set):
             counters["loss_path"] += 1
 
 
 def compare(old_file: str, new_file: str, outdir: str, sid: str):
+    """
+    Compara dos TSV MitoMap en streaming (sin cargar todo en memoria).
+
+    Genera:
+    - TSV de variantes cambiadas
+    - LOG resumen
+    - JSON con estadísticas completas
+    """
+
     os.makedirs(outdir, exist_ok=True)
 
     log.info("Comparando con merge externo (streaming)...")
@@ -279,6 +358,7 @@ def compare(old_file: str, new_file: str, outdir: str, sid: str):
     old_current: Optional[Tuple[str, dict]] = next(old_iter, None)
     new_current: Optional[Tuple[str, dict]] = next(new_iter, None)
 
+    # Contadores globales del análisis
     n_old = n_new = 0
     only_old = only_new = 0
     common = 0
@@ -287,20 +367,26 @@ def compare(old_file: str, new_file: str, outdir: str, sid: str):
     transitions: Dict[Tuple[str, str], int] = defaultdict(int)
     changes_by_transition: Dict[Tuple[str, str], list] = defaultdict(list)
     changed_rows = []
+    
     counters = dict(gain_path=0, loss_path=0, newly_annotated=0, reclassified=0)
     sample_col_names: list = []
 
+    # Merge streaming 
     while old_current is not None or new_current is not None:
         ok = old_current[0] if old_current else None
         nk = new_current[0] if new_current else None
 
+        # Misma variante en ambas versiones
         if ok == nk:
             ov = old_current[1]
             nv = new_current[1]
-            n_old += 1; n_new += 1; common += 1
+            n_old += 1
+            n_new += 1
+            common += 1
 
             if is_classified(ov.get("DISEASESTATUS", ".")):
                 old_classified += 1
+                
             if is_classified(nv.get("DISEASESTATUS", ".")):
                 new_classified += 1
 
@@ -313,13 +399,17 @@ def compare(old_file: str, new_file: str, outdir: str, sid: str):
             old_current = next(old_iter, None)
             new_current = next(new_iter, None)
 
+        # Variante solo en OLD
         elif nk is None or (ok is not None and ok < nk):
             ov = old_current[1]
             n_old += 1; only_old += 1
+            
             if is_classified(ov.get("DISEASESTATUS", ".")):
                 old_classified += 1
+                
             old_current = next(old_iter, None)
 
+        #Variante solo en NEW
         else:
             nv = new_current[1]
             n_new += 1; only_new += 1
@@ -327,10 +417,12 @@ def compare(old_file: str, new_file: str, outdir: str, sid: str):
                 new_classified += 1
             new_current = next(new_iter, None)
 
+    ##OUTPUTS
     log_file     = os.path.join(outdir, f"{sid}.log")
     json_file    = os.path.join(outdir, f"{sid}.json")
     changed_file = os.path.join(outdir, f"{sid}.changed.tsv")
 
+    # TSV de variantes con cambios relevantes
     with open(changed_file, "w") as f:
         header_cols = ["VARIANT", "OLD", "NEW", "DISEASE",
                        "AACHANGE", "HETEROPLASMY", "HOMOPLASMY", "PUBMED"]
@@ -343,6 +435,7 @@ def compare(old_file: str, new_file: str, outdir: str, sid: str):
                 row_cols.append(str(sample_data.get(col, ".")))
             f.write("\t".join(row_cols) + "\n")
 
+    # LOG RESUMEN
     with open(log_file, "w") as f:
         f.write("RESUMEN DE COMPARACION DE ANOTACIONES MITOMAP\n\n")
         f.write(f"Variantes en OLD: {n_old}\n")
@@ -394,6 +487,7 @@ def compare(old_file: str, new_file: str, outdir: str, sid: str):
                     row_str += str(transitions.get((a, b), 0)).rjust(col_w)
                 f.write(f"  {row_str}\n")
 
+    # JSON ESTRUCTURADO 
     with open(json_file, "w") as f:
         json.dump({
             "total_old": n_old,
