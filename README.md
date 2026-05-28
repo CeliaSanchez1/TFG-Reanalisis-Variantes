@@ -1,4 +1,4 @@
-# Trabajo de Fin de Grado- Reanotación de variantes genómicas
+# Trabajo de Fin de Grado: Implementación de un sistema automatizado de reanotación periódica de exomas completos para mejorar la tasa diagnóstica en un entorno asistencial.
 
 # Descripción
 Este repositorio contiene el pipeline desarrollado para el análisis de variantes genómicas a partir de datos de exoma. Se recogen scripts para fusionar y anotar archivos VCF, así como para comprobar y descargar las últimas actualizaciones de las bases de datos y comparar anotaciones con distintas versiones de estas. 
