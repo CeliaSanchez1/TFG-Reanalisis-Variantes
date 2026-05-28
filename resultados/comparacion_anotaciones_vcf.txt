@@ -1,0 +1,39 @@
+ Informe de comparación de las versiones de la anotación 
+
+Número de variantes encontradas 
+Versión antigua: 293902
+Versión nueva: 293902
+Comunes: 293902
+Porcentaje de clasificación 
+OLD clasificados: 36300
+NEW clasificados: 37998
+
+Cambios en significado clínico
+Variantes con cambio CLNSIG: 2601
+Sin cambio: 291301
+
+GANANCIA DE PATOGENICIDAD 
+Variantes que pasan a PATHOGENIC desde otra categoría: 71
+Variantes que pasan a LIKELY PATHOGENIC desde otra categoría: 0
+
+Representación matricial de los cambios en CLNSIG
+cat_new       benign  other  pathogenic  unclassified  vus
+cat_old                                                   
+benign         35259      1          41           341    1
+other             19    185           4             1    0
+pathogenic        62      0         187             3    3
+unclassified    1881     62          16        255530  113
+vus                7      0          10            29  147
+
+Genes que han sufrido más cambios
+GENE_new
+LINC01691-AC242852.1     617
+NBPF1                    277
+CSMD1                    268
+PPP1R1AP2-ANKRD26P1      221
+HLA-DQB1|HLA-DQB1-AS1    217
+NBPF10                   185
+RBFOX1                   181
+CHR_START-AL356585.4     179
+SYNE1                    179
+MUC16                    178

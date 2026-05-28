@@ -1,0 +1,38 @@
+RESUMEN DE COMPARACION DE ANOTACIONES MITOMAP
+
+Variantes en OLD: 7135
+Variantes en NEW: 7135
+
+Variantes en ambas: 7135
+Variantes nuevas (solo NEW): 0
+Variantes perdidas (solo OLD): 0
+
+Cobertura DiseaseStatus:
+  OLD clasificados: 398/7135 (5.58%)
+  NEW clasificados: 400/7135 (5.61%)
+
+Ganancia de patogenicidad (-> Cfrm-P / Cfrm-LP): 1
+  Sin clasificacion previa: 1
+  Reclasificadas: 0
+Perdida de patogenicidad: 0
+
+ Cambios detallados 
+
+  unclassified -> cfrm-p  (1 variantes)
+    MT:56:A:AC,ATC,<NON_REF>
+
+ Matriz de cambios (Filas=OLD, Columnas=NEW)
+
+                    unclassified       unclear    reported-b   reported-lb      reported  reported-vus      cfrm-vus   conflicting   reported-lp       cfrm-lp        cfrm-p
+                  ----------------------------------------------------------------------------------------------------------------------------------------------------------
+  unclassified   |          6735             0             0             0             0             0             0             0             1             0             1
+  unclear        |             0             5             0             0             0             0             0             0             0             0             0
+  reported-b     |             0             0             6             0             0             0             0             0             0             0             0
+  reported-lb    |             0             0             0             3             0             0             0             0             0             0             0
+  reported       |             0             0             0             0           301             0             0             0             0             0             0
+  reported-vus   |             0             0             0             0             0            26             0             0             0             0             0
+  cfrm-vus       |             0             0             0             0             0             0             5             0             0             0             0
+  conflicting    |             0             0             0             0             0             0             0            16             0             0             0
+  reported-lp    |             0             0             0             0             0             0             0             0             0             0             0
+  cfrm-lp        |             0             0             0             0             0             0             0             0             0            29             0
+  cfrm-p         |             0             0             0             0             0             0             0             0             0             0             7

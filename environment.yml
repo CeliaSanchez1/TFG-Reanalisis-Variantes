@@ -1,0 +1,28 @@
+name: tfg-env
+
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.11
+
+  - bcftools=1.21
+  - samtools
+  - htslib
+  - pysam=0.23.3
+  - snpeff=5.0
+  - openjdk=21.0.6
+  - cyvcf2
+
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn
+  - pip
+
+  - pip:
+      - click==8.3.1
+      - coloredlogs==15.0.1
+      - humanfriendly==10.0
