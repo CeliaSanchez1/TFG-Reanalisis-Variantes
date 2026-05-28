@@ -2,7 +2,7 @@
 
 # Descripción
 Este repositorio contiene el pipeline desarrollado para el análisis de variantes genómicas a partir de datos de exoma. Se recogen scripts para fusionar y anotar archivos VCF, así como para comprobar y descargar las últimas actualizaciones de las bases de datos y comparar anotaciones con distintas versiones de estas. 
-El repositorio incluye tanto el código del pipeline (en distintas carpetas para los scripts en lenguaje Python y Bash) como los resultados generados en diferentes etapas del análisis (en otra carpeta aislada de resultados). Cabe recalcar que estos resultados son los obtenidos al trabajar sobre archivos VCF y versiones de las bases de datos concretas, serán diferentes según se defina esto en la ejecución.
+El repositorio incluye tanto el código del pipeline (en distintas carpetas para los scripts en lenguaje Python y Bash) como los resultados generados en diferentes etapas del análisis (en otra carpeta aislada de resultados). Cabe recalcar que estos resultados son los obtenidos al trabajar sobre archivos VCF y versiones de las bases de datos concretas, serán diferentes según se definan estos factores en la ejecución.
 
 # Flujo de trabajo
 El pipeline sigue las siguientes etapas:
